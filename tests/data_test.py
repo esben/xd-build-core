@@ -975,6 +975,14 @@ class TestMetaString(unittest.TestCase):
         MetaVar(d, 'BAR', 'bar')
         self.assertEqual(d['FOOBAR'].get(), 'foobar')
 
+    def test_var_expand_clean_3(self):
+        d = MetaData()
+        FOO = MetaVar(d, 'FOO', 'foo${BAR}')
+        FOO.expand = 'clean'
+        FOOBAR = MetaVar(d, 'FOOBAR', '${FOO}${BAR}')
+        FOOBAR.expand = 'clean'
+        self.assertEqual(d['FOOBAR'].get(), 'foo')
+
     def test_var_expand_no(self):
         d = MetaData()
         MetaVar(d, 'FOO', 'foo')
