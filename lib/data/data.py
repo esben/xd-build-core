@@ -9,7 +9,33 @@ import json
 import logging
 log = logging.getLogger()
 
+# TODO: refactor MetaData class into XDNamespace class, making it a real
+# namespace type, so that 'FOO' variable of 'd' namespace is access with d.FOO
+# instead of d['FOO'].  It is shorter, more clear, and forces us to use valid
+# namespace names, which is probably a good idea, and will also be enforced by
+# the parser when custom PLY lexer is replaced by ast.
+#
+# The current MetaData methods needs to find another form.  Some (if not all)
+# of them ar propably better suited for stand-alone functions instead anyways.
+#
+# In functions, the recipe namespace could fx. be called 'recipe', giving:
+#    recipe.NAME
+#    recipe.DEPENDS
+#    recipe.VERSION
+#    recipe.CFLAGS
+#    recipe.do_configure
+#    ...
 
+# TODO: implement recipe/class/config parser pased on ast.  Let ast do the
+# lexical analysis, and postprocess the parsetree for generating an
+# XDNamespace with the result.
+
+# TODO: Consider dropping support for legacy variable expansion.  Why support
+# both
+#    FOOBAR = "${FOO}${BAR}"
+# and
+#    FOOBAR = FOO + BAR
+#    BAR ?= 'bar'
 # TODO: implement dynvar handling, for correct signature generation without
 # disturbance for changing DATE, TIME, MANIFEST_ORIGIN and so on.
 
