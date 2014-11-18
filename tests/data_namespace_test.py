@@ -557,6 +557,13 @@ class tests(unittest.case.TestCase):
         self.ns['D'].update_if(Expression('BAR'), Expression('E'))
         self.assertEqual(self.ns['D'].get(), {'foo': 42})
 
+    def test_dict_update_if_5(self):
+        self.ns['D'] = {'foo': 42}
+        self.ns['s'] = 'foobar'
+        self.ns['BAR'] = True
+        self.ns['D'].update_if(Expression('BAR'), {'foo': Expression('s')})
+        self.assertEqual(self.ns['D'].get(), {'foo': 'foobar'})
+
     def test_dict_item_1(self):
         self.ns['D'] = {}
         self.ns['D']['i'] = 42
