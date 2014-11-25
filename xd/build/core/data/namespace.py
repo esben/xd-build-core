@@ -6,8 +6,10 @@ log.setLevel(logging.INFO)
 from .var import *
 from .expr import *
 from .wrap import *
+from .func import *
 import copy
 import types
+import io
 
 
 __all__ = ['Namespace', 'MultiBinding', 'flattened']
@@ -74,6 +76,42 @@ class Namespace(dict):
         else:
             l = self
         return eval(expr, g, l)
+
+    def dump(self, stream=None, filter=None):
+        """Dump variables in human and machine (Python) readable format.
+
+        If given, filter must be a function taking two arguments.  It will be
+        called with the variable name and value as arguments for all
+        variables.  Only variables where it returns True will be included in
+        the dump output.
+
+        If stream is specified, dump will be written to the stream, and this
+        method will return None.  If stream is not specified, this method will
+        return the dump as a string.
+
+        Arguments:
+        stream -- output stream (default: sys.stdout)
+        filter -- function taking two arguments
+
+        """
+        functions = []
+        if stream is None:
+            stream_ = io.StringIO()
+        else:
+            stream_ = stream
+        for name, var in sorted(self.items()):
+            if filter and not filter(name, var):
+                continue
+            if not var.filtered():
+                continue
+            if isinstance(var, Function):
+                functions.append(var)
+            else:
+                var.dump(stream_)
+        for function in functions:
+            function.dump(stream_)
+        if stream is None:
+            return stream_.getvalue()
 
 
 class EvalWrapper(object):

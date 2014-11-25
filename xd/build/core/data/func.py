@@ -47,3 +47,6 @@ class Function(Variable):
         source = astunparse.unparse(source)
         source = source.strip('\n')
         self.source[function] = source
+
+    def dump(self, stream=None):
+        print('\n' + self.get_source(), file=stream)

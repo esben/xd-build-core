@@ -4,6 +4,7 @@ log.setLevel(logging.INFO)
 
 
 from .expr import *
+import pprint
 
 
 __all__ = ['Variable']
@@ -147,3 +148,7 @@ class Variable(object):
         if isinstance(value, Expression):
             value.set_scope(self.scope)
         return value
+
+    def dump(self, stream=None):
+        print('{0}={1}'.format(self.name, pprint.pformat(self.get())),
+              file = stream or sys.stdout)
