@@ -11,7 +11,7 @@ __all__ = ['Variable']
 
 class Variable(object):
 
-    __slots__ = ['scope', 'name', 'value', 'set_ifs', 'filters']
+    __slots__ = ['scope', 'name', 'value', 'set_ifs', 'filters', 'env']
 
     def __init__(self, value=None, scope=None):
         self.scope = scope
