@@ -5,9 +5,16 @@ log.setLevel(logging.INFO)
 
 from .recipe_version import *
 from .data.parser import *
+from .data.namespace import *
+from .data.string import *
+from .data.func import *
+from .recipe import *
 import os
 import sys
 import pprint
+import inspect
+import ast
+import astunparse
 
 
 __all__ = ['RecipeFile', 'InvalidRecipeName', 'InvalidRecipeFilename']
@@ -16,6 +23,8 @@ __all__ = ['RecipeFile', 'InvalidRecipeName', 'InvalidRecipeFilename']
 class InvalidRecipeName(Exception):
     pass
 class InvalidRecipeFilename(Exception):
+    pass
+class InvalidRecipeTypes(Exception):
     pass
 
 
@@ -83,10 +92,16 @@ class RecipeFile(object):
             return False
         return True
 
-    def parse(self):
+    def parse(self, force=False):
         """Parse recipe file."""
+        if not force and getattr(self, 'data', None):
+            return self.data
+        data = Namespace()
+        data['RECIPE_NAME'] = self.name
+        data['RECIPE_VERSION'] = String(
+            str(self.version) if self.version else None)
         parser = Parser()
-        self.data = parser.parse(self.path)
+        self.data = parser.parse(self.path, data)
         return self.data
 
     def dump(self, stream=None):
@@ -97,5 +112,33 @@ class RecipeFile(object):
         """
         if stream is None:
             stream = sys.stdout
+        functions = []
         for name, value in sorted(self.data.items()):
-            print("%s=%s"%(name, pprint.pformat(value.get())), file=stream)
+            if isinstance(value, Function):
+                functions.append(value)
+            else:
+                value.dump(stream)
+        for function in functions:
+            function.dump(stream)
+
+    def type_unfold(self):
+        if 'RECIPE_TYPES' in self.data:
+            recipe_types = self.data['RECIPE_TYPES'].get()
+            del self.data['RECIPE_TYPES']
+        else:
+            recipe_types = ['machine']
+        assert isinstance(recipe_types, list) and len(recipe_types) > 0
+        invalid_recipe_types = [
+            recipe_type for recipe_type in recipe_types
+            if not recipe_type in ('native', 'machine', 'sdk',
+                                   'cross', 'sdk-cross', 'canadian-cross')]
+        if invalid_recipe_types:
+            raise InvalidRecipeTypes(invalid_recipe_types)
+        self.recipes = {}
+        assert not 'RECIPE_TYPE' in self.data
+        for recipe_type in recipe_types:
+            recipe_data = self.data.copy()
+            recipe_data['RECIPE_TYPE'] = recipe_type
+            # FIXME: run type_unfold_hooks
+            self.recipes[recipe_type] = Recipe(recipe_data)
+        return self.recipes.values()

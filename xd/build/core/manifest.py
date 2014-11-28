@@ -2,7 +2,8 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-from xd.build.core.recipe_file import *
+from .recipe_file import *
+from .cookbook import *
 import configparser
 import os
 import glob
@@ -47,6 +48,7 @@ class Manifest(object):
                 recipe_files.append(recipe_file)
         for recipe_files in self.recipe_files.values():
             recipe_files.sort(key=lambda r: r.version, reverse=True)
+        self.tmpdir = os.path.join(self.topdir, 'tmp')
 
     def get_recipe(self, recipe):
         """Get XD-build recipe from manifest.
@@ -113,6 +115,16 @@ class Manifest(object):
             return recipe_files[0]
         return None
 
+    def cookbook(self):
+        """Build Cookbook with all recipes.
+
+        All recipe files will be parsed."""
+        cookbook = Cookbook()
+        for recipe_files in self.recipe_files.values():
+            cookbook.add(recipe_files)
+        cookbook.parse()
+        return cookbook
+
 
 class Layer(object):
     """XD-build layer."""
@@ -170,3 +182,6 @@ class Layer(object):
             return self.recipe_files[path]
         except KeyError:
             return None
+
+    def relpath(self, path):
+        return os.path.relpath(path, start=self.topdir)

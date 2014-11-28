@@ -109,8 +109,10 @@ class parse_tests(TestCase):
             f.write('FOO="foo"\n')
         recipe_file = RecipeFile('foobar.xd')
         d = recipe_file.parse()
-        self.assertEqual(len(d), 1)
+        self.assertEqual(len(d), 3)
         self.assertEqual(d['FOO'].get(), 'foo')
+        self.assertEqual(d['RECIPE_NAME'].get(), 'foobar')
+        self.assertIsNone(d['RECIPE_VERSION'].get())
 
     def test_dump_1(self):
         with open('foobar.xd', 'w') as f:
@@ -119,4 +121,7 @@ class parse_tests(TestCase):
         recipe_file.parse()
         stream = io.StringIO()
         recipe_file.dump(stream=stream)
-        self.assertRegex("FOO='foo'\n", stream.getvalue())
+        self.assertRegex("""FOO='foo'
+RECIPE_NAME='foobar'
+RECIPE_VERSION=None
+""", stream.getvalue())

@@ -55,10 +55,16 @@ class Task(object):
         self.files['task.py'] = """#!/usr/bin/env python3
 
 {0}
+_pre_functions = []
 _main_function = {1}
+_post_functions = []
 
 if __name__ == '__main__':
+    for pre_function in _pre_functions:
+        pre_function()
     _main_function()
+    for post_function in _post_functions:
+        post_function()
 """.format(data.dump(filter=self.dump_filter),
            data[self.name].get().__name__)
 

@@ -1,0 +1,42 @@
+fetch = Task()
+fetch.mount('/task/fetch', '%s/%s'%(FETCH_BASEDIR, FETCH_SUBDIR))
+
+unpack = Task()
+unpack.after('fetch')
+unpack.mount('/task/fetch', '%s/%s'%(FETCH_BASEDIR, FETCH_SUBDIR), ro=True)
+unpack.capture('/task/src')
+
+configure = Task()
+configure.after('fetch')
+def do_configure():
+    print('do_configure in %s:%s:%s'%(RECIPE_TYPE, RECIPE_NAME, TASK))
+configure = do_configure
+configure.capture('/task/build')
+
+compile = Task()
+compile.after(['configure'])
+def do_compile():
+    print('do_compile in %s:%s:%s'%(RECIPE_TYPE, RECIPE_NAME, TASK))
+compile = do_compile
+compile.capture('/task/build')
+
+install = Task()
+install.after('compile')
+install.capture('/task/install')
+
+package = Task()
+package.after('install')
+package.export('/task/package', '%s/%s'%(PACKAGE_BASEDIR, PACKAGE_SUBDIR))
+
+all = Task()
+all.after('package')
+
+FOO = 'foo "bar"'
+FOO.filter(TASK=='compile')
+FOO.env = True
+
+BAR = 'bar'
+BAR.filter(TASK=='compile')
+
+PATH = "$PATH:more"
+PATH.env = True

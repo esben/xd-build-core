@@ -75,3 +75,8 @@ class tests(ManifestTestCase):
         manifest = Manifest(self.manifest)
         self.assertIsNone(manifest.get_recipe(
             os.path.join(self.layerdir, 'recipes', 'bar')))
+
+    def test_cookbook(self):
+        manifest = Manifest(self.manifest)
+        cookbook = manifest.cookbook()
+        self.assertIsNotNone(cookbook)

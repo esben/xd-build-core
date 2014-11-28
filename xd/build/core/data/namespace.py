@@ -113,6 +113,9 @@ class Namespace(dict):
         if stream is None:
             return stream_.getvalue()
 
+    def tasks(self):
+        return [value for value in self.values() if isinstance(value, Task)]
+
 
 class EvalWrapper(object):
 
