@@ -94,6 +94,8 @@ def flattened(namespace, filter=None):
     for name, var in namespace.items():
         if filter and not filter(var):
             continue
+        if not var.filtered():
+            continue
         value = var.get()
         d[name] = value
         assert type(value) in (type(None), str, list, int, float, bool, dict,

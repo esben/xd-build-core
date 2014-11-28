@@ -736,3 +736,20 @@ class tests(unittest.case.TestCase):
         self.ns['_int'] = True
         self.assertEqual(flattened(self.ns, is_not_internal),
                          {'foo': 'bar', 'pi': 3.14, 'i': 42})
+
+    def test_flattened_var_filtered_1(self):
+        self.ns['FOO'] = 'foo'
+        self.ns['BAR'] = 'bar'
+        self.assertEqual(flattened(self.ns), {
+            'FOO': 'foo', 'BAR': 'bar'})
+        self.ns['FOO'].filter(Expression("BAR!='bar'"))
+        self.assertEqual(flattened(self.ns), {'BAR': 'bar'})
+
+    def test_flattened_var_filtered_2(self):
+        self.ns['FOO'] = 'foo'
+        self.ns['BAR'] = 'bar'
+        self.assertEqual(flattened(self.ns), {
+            'FOO': 'foo', 'BAR': 'bar'})
+        self.ns['FOO'].filter(Expression("BAR=='bar'"))
+        self.assertEqual(flattened(self.ns), {
+            'FOO': 'foo', 'BAR': 'bar'})

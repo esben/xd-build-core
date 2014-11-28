@@ -11,12 +11,13 @@ __all__ = ['Variable']
 
 class Variable(object):
 
-    __slots__ = ['scope', 'name', 'value', 'set_ifs']
+    __slots__ = ['scope', 'name', 'value', 'set_ifs', 'filters']
 
     def __init__(self, value=None, scope=None):
         self.scope = scope
         self.set(value)
         self.set_ifs = []
+        self.filters = []
 
     def __str__(self):
         return "%s(%s)"%(self.__class__.__name__,
@@ -40,6 +41,17 @@ class Variable(object):
     def set_if(self, condition, value):
         self.set_ifs.append((self.prepare_condition(condition),
                              self.prepare_value(value)))
+
+    def filter(self, condition):
+        self.filters.append(self.prepare_condition(condition))
+
+    def filtered(self):
+        if not self.filters:
+            return True
+        for filter in self.filters:
+            if self.eval_condition(filter):
+                return True
+        return False
 
     def override(self, value):
         for (condition, override_value) in reversed(self.set_ifs):
