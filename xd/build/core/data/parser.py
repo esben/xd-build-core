@@ -24,11 +24,15 @@ class Parser(object):
     constructors = ['String', 'Bool', 'Int', 'Float', 'List', 'Dict']
 
     def __init__(self):
+        pass
+
+    def parse(self, path, namespace=None):
         self.backlog = ast.Module()
         self.backlog.body = []
-
-    def parse(self, path):
-        self.namespace = Namespace()
+        if namespace is None:
+            self.namespace = Namespace()
+        else:
+            self.namespace = namespace
         self.expression_store = ExpressionStore('_expr', self.namespace)
         self.globals = {
             '_expr': self.expression_store.expressions,

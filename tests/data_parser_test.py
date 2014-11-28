@@ -558,3 +558,36 @@ PKG['{0}-dev'.format(RECIPE_NAME)] = ['/foobar']
         self.assertEqual(func(), 'foobar')
         self.assertEqual(d['foo'].get_source(), """def foo():
     return 'foobar'""")
+
+    def test_parse_multi_1(self):
+        with open('foo.xd', 'w') as f:
+            f.write('FOO=String("foo")\n')
+        with open('bar.xd', 'w') as f:
+            f.write('BAR=String("bar")\n')
+        d = self.parser.parse('foo.xd')
+        d = self.parser.parse('bar.xd', d)
+        self.assertEqual(len(d), 2)
+        self.assertEqual(d['FOO'].get(), 'foo')
+        self.assertEqual(d['BAR'].get(), 'bar')
+
+    def test_parse_multi_2(self):
+        with open('foo.xd', 'w') as f:
+            f.write('FOO=String("foo")\n')
+        with open('bar.xd', 'w') as f:
+            f.write('FOO="bar"\n')
+        d = self.parser.parse('foo.xd')
+        d = self.parser.parse('bar.xd', d)
+        self.assertEqual(len(d), 1)
+        self.assertEqual(d['FOO'].get(), 'bar')
+
+    def test_parse_multi_3(self):
+        with open('foo.xd', 'w') as f:
+            f.write('FOO=String("foo")\n')
+        with open('bar.xd', 'w') as f:
+            f.write('BAR=String("bar")\n')
+        d = self.parser.parse('foo.xd')
+        parser = Parser()
+        d = parser.parse('bar.xd', d)
+        self.assertEqual(len(d), 2)
+        self.assertEqual(d['FOO'].get(), 'foo')
+        self.assertEqual(d['BAR'].get(), 'bar')
