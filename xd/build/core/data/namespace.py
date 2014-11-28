@@ -7,9 +7,10 @@ from .var import *
 from .expr import *
 from .wrap import *
 import copy
+import types
 
 
-__all__ = ['Namespace', 'MultiBinding']
+__all__ = ['Namespace', 'MultiBinding', 'flattened']
 
 
 class MultiBinding(Exception):
@@ -78,3 +79,23 @@ class EvalWrapper(object):
 
     def __getitem__(self, key):
         return self.namespace[key].get()
+
+
+def flattened(namespace, filter=None):
+    """Return a flat representation of a Namespace instance.
+
+    If given, filter must be a function taking one arguments.  It will be
+    called with the Variable as arguments for all variables in namespace.  It
+    must return True for those variables that should be included in the
+    returned dict.
+
+    """
+    d = dict()
+    for name, var in namespace.items():
+        if filter and not filter(var):
+            continue
+        value = var.get()
+        d[name] = value
+        assert type(value) in (type(None), str, list, int, float, bool, dict,
+                               types.FunctionType)
+    return d

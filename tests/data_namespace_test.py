@@ -696,3 +696,43 @@ class tests(unittest.case.TestCase):
         self.ns['BAR'] = 'foo'
         self.assertEqual(self.ns['D'].get()['FOO'], 'foo')
         self.assertEqual(nscopy['D'].get()['FOO'], 'bar')
+
+    def test_flattened_1(self):
+        self.assertEqual(flattened(self.ns), {})
+
+    def test_flattened_2(self):
+        self.ns['foo'] = 'bar'
+        self.assertEqual(flattened(self.ns), {'foo': 'bar'})
+
+    def test_flattened_3(self):
+        self.ns['foo'] = 'bar'
+        self.ns['pi'] = 3.14
+        self.ns['i'] = 42
+        self.assertEqual(flattened(self.ns),
+                         {'foo': 'bar', 'pi': 3.14, 'i': 42})
+
+    def test_flattened_4(self):
+        self.ns['none'] = String()
+        self.assertEqual(flattened(self.ns), {'none': None})
+
+    def test_flattened_filter_1(self):
+        def is_true(var):
+            return bool(var.get())
+        self.ns['foo'] = 'bar'
+        self.ns['pi'] = 3.14
+        self.ns['i'] = 42
+        self.ns['zero'] = 0
+        self.ns['true'] = True
+        self.ns['false'] = False
+        self.assertEqual(flattened(self.ns, is_true),
+                         {'foo': 'bar', 'pi': 3.14, 'i': 42, 'true': True})
+
+    def test_flattened_filter_2(self):
+        def is_not_internal(var):
+            return not var.name.startswith('_')
+        self.ns['foo'] = 'bar'
+        self.ns['pi'] = 3.14
+        self.ns['i'] = 42
+        self.ns['_int'] = True
+        self.assertEqual(flattened(self.ns, is_not_internal),
+                         {'foo': 'bar', 'pi': 3.14, 'i': 42})
