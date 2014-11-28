@@ -654,3 +654,45 @@ class tests(unittest.case.TestCase):
         self.ns['BAR'] = True
         self.ns['pi'] = 3.14
         self.assertEqual(self.ns['D'].get()['foo']['bar'], 3.14)
+
+    def test_copy_1(self):
+        nscopy = self.ns.copy()
+        self.assertEqual(len(self.ns), 0)
+        self.assertEqual(len(nscopy), 0)
+        self.ns['FOO'] = 42
+        nscopy['h'] = 'Hello'
+        nscopy['w'] = 'world'
+        self.assertEqual(len(self.ns), 1)
+        self.assertEqual(len(nscopy), 2)
+
+    def test_copy_2(self):
+        self.ns['h'] = 'Hello'
+        self.ns['w'] = 'world'
+        nscopy = self.ns.copy()
+        self.ns['FOO'] = 42
+        nscopy['BAR'] = 43
+        self.assertEqual(len(self.ns), 3)
+        self.assertEqual(len(nscopy), 3)
+        self.assertEqual(self.ns['FOO'].get(), 42)
+        self.assertEqual(nscopy['BAR'].get(), 43)
+
+    def test_copy_3(self):
+        self.ns['BAR'] = 'bar'
+        self.ns['D'] = {'FOO': String(Expression('BAR'))}
+        self.assertEqual(self.ns['D']['FOO'].get(), 'bar')
+        nscopy = self.ns.copy()
+        self.ns['D']['FOO'] = 'foo'
+        self.assertEqual(self.ns['D'].get()['FOO'], 'foo')
+        self.assertEqual(nscopy['D'].get()['FOO'], 'bar')
+
+    def test_copy_4(self):
+        self.ns['BAR'] = 'bar'
+        self.ns['D'] = {}
+        self.ns['D']['FOO'] = String()
+        self.ns['D'].update({'FOO': String(Expression('BAR'))})
+        self.ns['D'].get()
+        self.assertEqual(self.ns['D'].get()['FOO'], 'bar')
+        nscopy = self.ns.copy()
+        self.ns['BAR'] = 'foo'
+        self.assertEqual(self.ns['D'].get()['FOO'], 'foo')
+        self.assertEqual(nscopy['D'].get()['FOO'], 'bar')

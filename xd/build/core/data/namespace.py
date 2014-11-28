@@ -6,6 +6,7 @@ log.setLevel(logging.INFO)
 from .var import *
 from .expr import *
 from .wrap import *
+import copy
 
 
 __all__ = ['Namespace', 'MultiBinding']
@@ -34,6 +35,9 @@ class Namespace(dict):
     def __init__(self):
         self.eval_wrapper = EvalWrapper(self)
         super(Namespace, self).__init__(self)
+
+    def copy(self):
+        return copy.deepcopy(self)
 
     def __setitem__(self, key, value):
         if key in self:
