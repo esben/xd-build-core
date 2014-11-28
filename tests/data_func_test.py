@@ -33,10 +33,8 @@ class tests(unittest.case.TestCase):
 
     def test_get_source_1(self):
         f = Function(foo)
-        self.assertEqual(f.get_source(), '''
-def foo():
-    return 'foobar'
-''')
+        self.assertEqual(f.get_source(), """def foo():
+    return 'foobar'""")
 
     def test_get_source_2(self):
         f = Function()

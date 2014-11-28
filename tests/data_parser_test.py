@@ -556,7 +556,5 @@ PKG['{0}-dev'.format(RECIPE_NAME)] = ['/foobar']
         import types
         self.assertIsInstance(func, types.FunctionType)
         self.assertEqual(func(), 'foobar')
-        self.assertEqual(d['foo'].get_source(), '''
-def foo():
-    return 'foobar'
-''')
+        self.assertEqual(d['foo'].get_source(), """def foo():
+    return 'foobar'""")

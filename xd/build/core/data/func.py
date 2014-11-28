@@ -22,7 +22,7 @@ class Function(Variable):
     def __init__(self, value=None, scope=None):
         self.source = {}
         super(Function, self).__init__(value, scope)
-    
+
     # FIXME: keep in code format, and only produce source code when
     # calling:
     def get_source(self):
@@ -45,5 +45,5 @@ class Function(Variable):
             source = source.body[0]
         assert isinstance(source, ast.FunctionDef)
         source = astunparse.unparse(source)
-        source = '\n' + source.strip('\n') + '\n'
+        source = source.strip('\n')
         self.source[function] = source
