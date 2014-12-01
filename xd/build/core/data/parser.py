@@ -9,6 +9,7 @@ from .string import *
 from .num import *
 from .list import *
 from .dict import *
+from .task import *
 import ast
 
 
@@ -21,7 +22,8 @@ class SyntaxError(Exception):
 
 class Parser(object):
 
-    constructors = ['String', 'Bool', 'Int', 'Float', 'List', 'Dict']
+    constructors = ['String', 'Bool', 'Int', 'Float', 'List', 'Dict',
+                    'Task']
 
     def __init__(self):
         pass

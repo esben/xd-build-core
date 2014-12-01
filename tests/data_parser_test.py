@@ -591,3 +591,21 @@ PKG['{0}-dev'.format(RECIPE_NAME)] = ['/foobar']
         self.assertEqual(len(d), 2)
         self.assertEqual(d['FOO'].get(), 'foo')
         self.assertEqual(d['BAR'].get(), 'bar')
+
+    def test_add_task_1(self):
+        with open('recipe.xd', 'w') as f:
+            f.write('''def do_foo():
+    return 'foobar'
+
+foo = Task()
+foo = do_foo
+''')
+        d = self.parser.parse('recipe.xd')
+        self.assertEqual(len(d), 2)
+        func = d['foo'].get()
+        import types
+        self.assertIsInstance(func, types.FunctionType)
+        self.assertEqual(func(), 'foobar')
+        task_func = d['foo'].get()
+        self.assertEqual(func, task_func)
+        self.assertEqual(task_func(), 'foobar')
