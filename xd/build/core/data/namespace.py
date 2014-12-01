@@ -64,12 +64,16 @@ class Namespace(dict):
         var.name = None
         super(Namespace, self).__delitem__(key)
 
-    def eval(self, expr, g=None):
+    def eval(self, expr, g=None, wrapper=True):
         if isinstance(expr, Expression):
             expr = expr.code or expr.source
         if g is None:
             g = {}
-        return eval(expr, g, self.eval_wrapper)
+        if wrapper:
+            l = self.eval_wrapper
+        else:
+            l = self
+        return eval(expr, g, l)
 
 
 class EvalWrapper(object):
