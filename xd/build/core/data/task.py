@@ -62,6 +62,12 @@ class Task(Variable):
         else:
             self._after.add(value)
 
+    def dump(self, stream=None):
+        function = self.get()
+        print('{}=Task({}, before={}, after={})'.format(
+            self.name, '<{}>'.format(function.__name__) if function else 'None',
+            self._before, self._after), file=stream or sys.stdout)
+
     def mount(self, container, host, ro=False):
         '''Bind mount a host directory to a container directory.
 
