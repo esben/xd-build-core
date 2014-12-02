@@ -68,3 +68,118 @@ class tests(unittest.case.TestCase):
         with self.assertRaises(TypeError):
             self.ns['t'] = self.ns['i']
 
+    def test_init_after_1(self):
+        self.ns['fetch'] = Task()
+        self.ns['unpack'] = Task(after='fetch')
+        # FIXME: check for something
+
+    def test_after_1(self):
+        self.ns['fetch'] = Task()
+        self.ns['unpack'] = Task()
+        self.ns['unpack'].after('fetch')
+
+    def test_init_after_2(self):
+        self.ns['fetch'] = Task()
+        self.ns['unpack'] = Task(after='fetch')
+        self.ns['configure'] = Task(after='unpack')
+        # FIXME: check for something
+
+    def test_after_2a(self):
+        self.ns['fetch'] = Task()
+        self.ns['unpack'] = Task(after='fetch')
+        self.ns['configure'] = Task(after='unpack')
+        self.ns['unpack'].after('fetch')
+        self.ns['configure'].after(['fetch', 'unpack'])
+        # FIXME: check for something
+
+    def test_after_2b(self):
+        self.ns['fetch'] = Task()
+        self.ns['unpack'] = Task(after='fetch')
+        self.ns['configure'] = Task(after='unpack')
+        self.ns['unpack'].after('fetch')
+        self.ns['configure'].after(set(['fetch', 'unpack']))
+        # FIXME: check for something
+
+    def test_init_after_3(self):
+        self.ns['fetch'] = Task(after='foobar')
+        # FIXME: check for something
+
+    def test_init_before_1(self):
+        self.ns['fetch'] = Task(before='unpack')
+        self.ns['unpack'] = Task()
+        # FIXME: check for something
+
+    def test_before_1(self):
+        self.ns['fetch'] = Task()
+        self.ns['unpack'] = Task()
+        self.ns['fetch'].before('unpack')
+        # FIXME: check for something
+
+    def test_init_before_2(self):
+        self.ns['fetch'] = Task(before='unpack')
+        self.ns['unpack'] = Task(before='configure')
+        self.ns['configure'] = Task()
+        # FIXME: check for something
+
+    def test_before_2a(self):
+        self.ns['fetch'] = Task(before='unpack')
+        self.ns['unpack'] = Task(before='configure')
+        self.ns['configure'] = Task()
+        self.ns['fetch'].before('unpack')
+        self.ns['configure'].before(['unpack', 'fetch'])
+        # FIXME: check for something
+
+    def test_before_2b(self):
+        self.ns['fetch'] = Task(before='unpack')
+        self.ns['unpack'] = Task(before='configure')
+        self.ns['configure'] = Task()
+        self.ns['fetch'].before('unpack')
+        self.ns['configure'].before(set(['unpack', 'fetch']))
+        # FIXME: check for something
+
+    def test_init_before_3(self):
+        self.ns['fetch'] = Task(before='foobar')
+        # FIXME: check for something
+
+    def test_mount_1(self):
+        t = Task()
+        t.mount('/foo', 'some/foo')
+        # FIXME: check for something
+
+    def test_mount_2(self):
+        t = Task()
+        t.mount('/foo', 'some/foo', True)
+        # FIXME: check for something
+
+    def test_mount_3(self):
+        t = Task()
+        t.mount('/foo', 'some/foo', False)
+        # FIXME: check for something
+
+    def test_mount_4(self):
+        t = Task()
+        t.mount('/foo', 'some/foo')
+        t.mount('/bar', 'other/bar')
+        # FIXME: check for something
+
+    def test_export_1(self):
+        t = Task()
+        t.export('/foo', 'some/foo')
+        # FIXME: check for something
+
+    def test_export_2(self):
+        t = Task()
+        t.export('/foo', 'some/foo')
+        t.export('/bar', 'other/bar')
+        # FIXME: check for something
+
+    def test_capture_1(self):
+        t = Task()
+        t.capture('/foo')
+        # FIXME: check for something
+
+    def test_capture_2(self):
+        t = Task()
+        t.capture('/foo')
+        t.capture('/bar')
+        # FIXME: check for something
