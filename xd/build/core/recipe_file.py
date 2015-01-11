@@ -92,11 +92,11 @@ class RecipeFile(object):
             return False
         return True
 
-    def parse(self, force=False):
+    def parse(self, data, force=False):
         """Parse recipe file."""
         if not force and getattr(self, 'data', None):
             return self.data
-        data = Namespace()
+        data = Namespace(data)
         data['RECIPE_NAME'] = self.name
         data['RECIPE_VERSION'] = String(
             str(self.version) if self.version else None)

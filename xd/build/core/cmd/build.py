@@ -22,12 +22,10 @@ def run(args, manifest, env):
             target.task = 'all'
         if not target.type:
             target.type = 'machine'
-    #recipe = manifest.get_recipe(args.recipe)
-    #if recipe is None:
-    #    log.error('recipe not found: %s', args.recipe)
-    #    return 1
     cookbook = manifest.cookbook()
     targets = [cookbook.get_task(target) for target in targets]
-    for target in targets:
-        target.run(manifest.tmpdir)
+    # FIXME: these targets (=tasks) should be added to buildqueue which should
+    # add all needed task dependencies
+    for task in targets:
+        task.run(manifest)
     return

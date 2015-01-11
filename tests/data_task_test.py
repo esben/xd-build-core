@@ -4,6 +4,7 @@ from xd.build.core.data.func import Function
 from xd.build.core.data.expr import Expression
 
 import unittest
+import io
 
 def foo():
     return 'foobar'
@@ -40,6 +41,11 @@ class tests(unittest.case.TestCase):
         self.ns['t'] = Expression('f')
         self.assertEqual(self.ns['t'].get(), None)
 
+    def test_init_get_6(self):
+        self.ns['t'] = Task(Expression('f'))
+        self.ns['f'] = foo
+        self.assertEqual(self.ns['t'].get(), foo)
+        
     def test_init_invalid_1(self):
         t = Task()
         with self.assertRaises(TypeError):
@@ -143,34 +149,34 @@ class tests(unittest.case.TestCase):
 
     def test_mount_1(self):
         t = Task()
-        t.mount('/foo', 'some/foo')
+        t.mount('some/foo', '/foo')
         # FIXME: check for something
 
     def test_mount_2(self):
         t = Task()
-        t.mount('/foo', 'some/foo', True)
+        t.mount('some/foo', '/foo', True)
         # FIXME: check for something
 
     def test_mount_3(self):
         t = Task()
-        t.mount('/foo', 'some/foo', False)
+        t.mount('some/foo', '/foo', False)
         # FIXME: check for something
 
     def test_mount_4(self):
         t = Task()
-        t.mount('/foo', 'some/foo')
-        t.mount('/bar', 'other/bar')
+        t.mount('some/foo', '/foo')
+        t.mount('other/bar', 'bar')
         # FIXME: check for something
 
-    def test_export_1(self):
+    def test_merge_1(self):
         t = Task()
-        t.export('/foo', 'some/foo')
+        t.merge('/foo', 'some/foo')
         # FIXME: check for something
 
-    def test_export_2(self):
+    def test_merge_2(self):
         t = Task()
-        t.export('/foo', 'some/foo')
-        t.export('/bar', 'other/bar')
+        t.merge('/foo', 'some/foo')
+        t.merge('/bar', 'other/bar')
         # FIXME: check for something
 
     def test_capture_1(self):
@@ -183,3 +189,10 @@ class tests(unittest.case.TestCase):
         t.capture('/foo')
         t.capture('/bar')
         # FIXME: check for something
+
+    def test_dump_1(self):
+        self.ns['t'] = Task()
+        stream = io.StringIO()
+        self.ns['t'].dump(stream=stream)
+        self.assertEqual(stream.getvalue(),
+                         't=Task(None, before=None, after=None)\n')

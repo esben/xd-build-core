@@ -1,32 +1,55 @@
+FETCH_BASEDIR = '%s/fetch'%(MANIFEST_TOPDIR)
+FETCH_SUBDIR = 'tasktest'
+
 fetch = Task()
-fetch.mount('/task/fetch', '%s/%s'%(FETCH_BASEDIR, FETCH_SUBDIR))
+fetch.mount('%s/%s'%(FETCH_BASEDIR, FETCH_SUBDIR), '/xd/fetch')
+def do_fetch():
+    with open('/xd/fetch/hello.c', 'w') as f:
+        f.write("""#include <stdio.h>
+int main(int argc, char **argv)
+{
+        printf("Hello world.\\n");
+        return 0
+}
+""")
+fetch = do_fetch
 
 unpack = Task()
 unpack.after('fetch')
-unpack.mount('/task/fetch', '%s/%s'%(FETCH_BASEDIR, FETCH_SUBDIR), ro=True)
-unpack.capture('/task/src')
+unpack.mount('%s/%s'%(FETCH_BASEDIR, FETCH_SUBDIR), '/xd/fetch', ro=True)
+unpack.capture('/xd/src')
+def do_unpack():
+    import shutil, os
+    os.mkdir('/xd/src') # FIXME: should be created automatically
+    shutil.copy('/xd/fetch/hello.c', '/xd/src/')
+unpack = do_unpack
 
 configure = Task()
-configure.after('fetch')
+configure.after('unpack')
 def do_configure():
     print('do_configure in %s:%s:%s'%(RECIPE_TYPE, RECIPE_NAME, TASK))
 configure = do_configure
-configure.capture('/task/build')
+configure.capture('/xd/src')
 
 compile = Task()
-compile.after(['configure'])
+compile.after(['configure', 'unpack'])
+#compile.cwd = '/xd/src'
 def do_compile():
     print('do_compile in %s:%s:%s'%(RECIPE_TYPE, RECIPE_NAME, TASK))
+    from sh import gcc
+    import os
+    os.chdir('/xd/src') # drop when .cwd is implemented
+    print(gcc('hello.c', '-o', 'hello'))
 compile = do_compile
-compile.capture('/task/build')
+compile.capture('/xd/src')
 
 install = Task()
 install.after('compile')
-install.capture('/task/install')
+install.capture('/xd/install')
 
 package = Task()
 package.after('install')
-package.export('/task/package', '%s/%s'%(PACKAGE_BASEDIR, PACKAGE_SUBDIR))
+package.merge('/xd/package', '%s/%s'%(PACKAGE_BASEDIR, PACKAGE_SUBDIR))
 
 all = Task()
 all.after('package')
@@ -38,5 +61,5 @@ FOO.env = True
 BAR = 'bar'
 BAR.filter(TASK=='compile')
 
-PATH = "$PATH:more"
-PATH.env = True
+#PATH = "$PATH:more"
+#PATH.env = True

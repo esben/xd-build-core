@@ -49,6 +49,7 @@ class Manifest(object):
         for recipe_files in self.recipe_files.values():
             recipe_files.sort(key=lambda r: r.version, reverse=True)
         self.tmpdir = os.path.join(self.topdir, 'tmp')
+        self.capturedir = os.path.join(self.topdir, 'capture')
 
     def get_recipe(self, recipe):
         """Get XD-build recipe from manifest.
@@ -122,7 +123,7 @@ class Manifest(object):
         cookbook = Cookbook()
         for recipe_files in self.recipe_files.values():
             cookbook.add(recipe_files)
-        cookbook.parse()
+        cookbook.parse({'MANIFEST_TOPDIR': self.topdir})
         return cookbook
 
 

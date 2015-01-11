@@ -35,9 +35,9 @@ class Namespace(dict):
     implemented as a mapping so it can be used as a locals to eval().
     """
 
-    def __init__(self):
+    def __init__(self, data=None):
         self.eval_wrapper = EvalWrapper(self)
-        super(Namespace, self).__init__(self)
+        super(Namespace, self).__init__(data or {})
 
     def copy(self):
         return copy.deepcopy(self)

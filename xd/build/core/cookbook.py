@@ -31,15 +31,16 @@ class Cookbook(object):
             assert isinstance(recipe_file, RecipeFile)
             self.recipe_files.append(recipe_file)
 
-    def parse(self, force=False):
+    def parse(self, data=None, force=False):
         """Parse all recipe files.
 
         Arguments:
+        data -- initial recipe data variables
         force -- True: force (re)parse of all recipes, False: skip already
                  parsed recipes.
         """
         for recipe_file in self.recipe_files:
-            recipe_file.parse()
+            recipe_file.parse(data)
             self.recipes.extend(recipe_file.type_unfold())
 
     def get_task(self, target):
