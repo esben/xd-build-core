@@ -1,4 +1,4 @@
-FROM debian:7.5
+FROM debian:jessie
 
 RUN apt-get update ; apt-get install -y apt-utils
 ENV DEBIAN_FRONTEND noninteractive
@@ -12,3 +12,5 @@ CMD /bin/login -f xd
 
 VOLUME /xd/task
 
+RUN apt-get install -y python3-sh vim tree
+RUN apt-get install -y build-essential

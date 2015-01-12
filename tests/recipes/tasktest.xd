@@ -3,13 +3,14 @@ FETCH_SUBDIR = 'tasktest'
 
 fetch = Task()
 fetch.mount('%s/%s'%(FETCH_BASEDIR, FETCH_SUBDIR), '/xd/fetch')
+#fetch.wd('/xd/fetc')
 def do_fetch():
     with open('/xd/fetch/hello.c', 'w') as f:
         f.write("""#include <stdio.h>
 int main(int argc, char **argv)
 {
         printf("Hello world.\\n");
-        return 0
+        return 0;
 }
 """)
 fetch = do_fetch
@@ -17,7 +18,7 @@ fetch = do_fetch
 unpack = Task()
 unpack.after('fetch')
 unpack.mount('%s/%s'%(FETCH_BASEDIR, FETCH_SUBDIR), '/xd/fetch', ro=True)
-unpack.capture('/xd/src')
+#unpack.wd('/xd/src')
 def do_unpack():
     import shutil, os
     os.mkdir('/xd/src') # FIXME: should be created automatically
@@ -26,30 +27,31 @@ unpack = do_unpack
 
 configure = Task()
 configure.after('unpack')
+#configure.wd('/xd/src')
 def do_configure():
     print('do_configure in %s:%s:%s'%(RECIPE_TYPE, RECIPE_NAME, TASK))
 configure = do_configure
-configure.capture('/xd/src')
 
 compile = Task()
 compile.after(['configure', 'unpack'])
-#compile.cwd = '/xd/src'
+#compile.wd = '/xd/src'
 def do_compile():
     print('do_compile in %s:%s:%s'%(RECIPE_TYPE, RECIPE_NAME, TASK))
     from sh import gcc
     import os
-    os.chdir('/xd/src') # drop when .cwd is implemented
+    os.chdir('/xd/src') # drop when .wd() is implemented
     print(gcc('hello.c', '-o', 'hello'))
 compile = do_compile
-compile.capture('/xd/src')
 
 install = Task()
 install.after('compile')
-install.capture('/xd/install')
+#install.wd('/xd/src')
+#install.dir('/xd/install')
 
 package = Task()
 package.after('install')
-package.merge('/xd/package', '%s/%s'%(PACKAGE_BASEDIR, PACKAGE_SUBDIR))
+package.mount('%s/%s/%s'%(PACKAGE_BASEDIR, PACKAGE_SUBDIR, 'SHA1SIGNATURE'),
+              '/xd/package')
 
 all = Task()
 all.after('package')

@@ -63,6 +63,14 @@ class Task(Variable):
         else:
             self._after.add(value)
 
+    def parent(self):
+        parents = self.parents()
+        if not parents:
+            return None
+        if len(parents) > 1:
+            raise Exception('multiple parents')
+        return parents.pop()
+            
     def parents(self, pure=True):
         tasks = [var for var in self.scope.values()
                  if isinstance(var, Task) and var != self]
