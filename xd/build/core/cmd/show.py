@@ -1,4 +1,5 @@
 from xd.build.core.manifest import *
+from xd.build.core.data.namespace import *
 import os
 
 import logging
@@ -20,6 +21,6 @@ def run(args, manifest, env):
         log.error('recipe not found: %s', args.recipe)
         return 1
     print('#%s# %s%s#'%(os.linesep, recipe.path, os.linesep))
-    recipe.parse()
+    recipe.parse(Namespace({'MANIFEST_TOPDIR': manifest.topdir}))
     recipe.dump()
     return

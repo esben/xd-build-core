@@ -8,7 +8,9 @@ from .data.namespace import flattened
 import os
 import stat
 import shlex
+import sh
 from sh import docker
+import hashlib
 
 
 __all__ = ['Task', 'InvalidTaskName']
@@ -16,6 +18,30 @@ __all__ = ['Task', 'InvalidTaskName']
 
 class InvalidTaskName(Exception):
     pass
+
+
+def first_item(var):
+    return var[0]
+
+
+class TaskSignature(object):
+
+    def __init__(self):
+        self.m = hashlib.md5()
+
+    def __str__(self):
+        return self.m.hexdigest()
+
+    def digest(self):
+        return self.m.digest()
+
+    def update(self, msg):
+        if isinstance(msg, TaskSignature):
+            msg = str(msg)
+        if isinstance(msg, str):
+            msg = msg.encode('utf-8')
+        self.m.update(msg)
+        self.m.update(b'\0')
 
 
 class Task(object):
@@ -29,35 +55,47 @@ class Task(object):
         name -- name of task, fx. 'compile'
         """
         try:
-            self.task = recipe.data[name]
+            self.data = recipe.data[name]
         except KeyError:
             raise InvalidTaskName(name)
-        if not isinstance(self.task, xd.build.core.data.task.Task):
+        if not isinstance(self.data, xd.build.core.data.task.Task):
             raise InvalidTaskName(name)
         self.recipe = recipe
         self.name = name
 
-    def prepare(self, tmpdir):
+    def __str__(self):
+        return '%s:%s'%(self.recipe, self.name)
+
+    def parent(self):
+        parent = self.data.parent()
+        if not parent:
+            return None
+        return self.recipe.get_task(parent)
+
+    def prepare(self):
         self.files = {}
         data = self.recipe.data.copy()
         assert not 'TASK' in data
         data['TASK'] = self.name
-        # FIXME: run task_hooks
-
-        tasks = set([var for var in data.values()
-                 if isinstance(var, xd.build.core.data.task.Task)
-                     and var.name != self.name])
-
+        # FIXME: run task_prepare_hooks
+        # Git rid of other tasks
+        for other_task in [var for var in data.values()
+                           if isinstance(var, xd.build.core.data.task.Task)
+                           and var.name != self.name]:
+            del data[other_task.name]
+        self.prepare_run_sh()
         self.prepare_env_sh(data)
         self.prepare_data_py(data)
-        self.prepare_run_sh()
-        for filename, filedata in self.files.items():
-            path = os.path.join(tmpdir, filename)
-            with open(path, 'w') as file:
-                file.write(filedata)
-            if path[-3:] in ('.py', '.sh'):
-                os.chmod(path, stat.S_IRWXU|stat.S_IRWXG
-                         |stat.S_IROTH|stat.S_IXOTH)
+        self.signature = TaskSignature()
+        for filename, content in sorted(self.files.items(), key=first_item):
+            self.signature.update(filename)
+            self.signature.update(content)
+
+    def prepare_run_sh(self):
+        self.files['run.sh'] = """#!/usr/bin/env bash
+source /xd/task/env.sh
+/xd/task/data.py
+"""
 
     def prepare_env_sh(self, data):
         def env_sh_filter(var):
@@ -68,14 +106,16 @@ class Task(object):
             return True
         env_data = flattened(data, filter=env_sh_filter)
         self.files['env.sh'] = ""
-        for name, value in sorted(env_data.items()):
+        for name, value in sorted(env_data.items(), key=first_item):
             self.files['env.sh'] += "export %s=%s\n"%(
                 name, shlex.quote(str(value)))
 
     def prepare_data_py(self, data):
-        func = self.task.get()
-        if func is None:
-            return
+        func = data[self.name].get()
+        if func:
+            main_function = func.__name__
+        else:
+            main_function = None
         self.files['data.py'] = """#!/usr/bin/env python3
 
 {0}
@@ -86,17 +126,11 @@ _post_functions = []
 if __name__ == '__main__':
     for pre_function in _pre_functions:
         pre_function()
-    _main_function()
+    if _main_function:
+        _main_function()
     for post_function in _post_functions:
         post_function()
-""".format(data.dump(filter=self.dump_filter),
-           data[self.name].get().__name__)
-
-    def prepare_run_sh(self):
-        self.files['run.sh'] = """#!/usr/bin/env bash
-source /xd/task/env.sh
-/xd/task/data.py
-"""
+""".format(data.dump(filter=self.dump_filter), main_function)
             
     def dump_filter(self, name, value):
         if name.startswith('_'):
@@ -105,58 +139,81 @@ source /xd/task/env.sh
             return False
         return True
 
-    def __str__(self):
-        return '%s:%s'%(self.recipe, self.name)
+    def write(self, tmpdir):
+        if not os.path.exists(tmpdir):
+            os.makedirs(tmpdir)
+        for filename, filedata in self.files.items():
+            path = os.path.join(tmpdir, filename)
+            with open(path, 'w') as file:
+                file.write(filedata)
+            if path[-3:] in ('.py', '.sh'):
+                os.chmod(path, stat.S_IRWXU|stat.S_IRWXG
+                         |stat.S_IROTH|stat.S_IXOTH)
 
-    def run(self, manifest):
-        if not self.recipe.data[self.name].get():
-            print('Skipping noop %s'%(self))
-            return
-        print('Running %s'%(self))
+    def recipe_version(self):
+        if self.recipe.version is not None:
+            return self.recipe.version
+        else:
+            return ''
+
+    def container(self):
+        return '_'.join(
+            ['xd-build', self.recipe.type, self.recipe.name,
+             self.recipe_version(), self.name])
+
+    def image(self):
+        return '{}:{}'.format(self.container(), self.signature)
+
+    def isdone(self):
+        try:
+            docker.inspect(self.image())
+        except sh.ErrorReturnCode:
+            return False
+        return True
+   
+    def run(self, base_tmpdir):
         if self.recipe.version is None:
             recipe_name = self.recipe.name
         else:
             recipe_name = '%s_%s'%(self.recipe.name, self.recipe.version)
-        tmpdir = os.path.join(manifest.tmpdir,
+        tmpdir = os.path.join(base_tmpdir,
                               recipe_name, self.recipe.type, self.name)
-        if not os.path.exists(tmpdir):
-            os.makedirs(tmpdir)
-        self.prepare(tmpdir)
+        #if not self.recipe.data[self.name].get():
+        #    print('Skipping noop %s'%(self))
+        #    return
+        print('Running %s'%(self))
+        self.write(tmpdir)
         args = ['--volume={}:/xd/task'.format(tmpdir)]
-        for host_dir, container_dir, ro in self.task._mount:
-            host_dir = self.task.eval(host_dir)
-            container_dir = self.task.eval(container_dir)
+        for host_dir, container_dir, ro in self.data._mount:
+            host_dir = self.data.eval(host_dir)
+            container_dir = self.data.eval(container_dir)
             arg = '--volume={}:{}'.format(host_dir, container_dir)
             if ro:
                 arg += ':ro'
             if not os.path.exists(host_dir):
                 os.makedirs(host_dir)    
             args.append(arg)
-        if self.recipe.version is not None:
-            recipe_version = self.recipe.version
-        else:
-            recipe_version = ''
-        self.container = '_'.join(
-            ['xd-build', self.recipe.type, self.recipe.name, recipe_version,
-             self.name])
-        print('Container', self.container)
-        args.append('--name={}'.format(self.container))
+        container = self.container()
+        print('Container', self.container())
+        args.append('--name={}'.format(container))
         parent_image = 'xd-build'
-        parent_task = self.task.parent()
+        parent_task = self.parent()
         if parent_task:
             parent_image = '_'.join([parent_image,
                                      self.recipe.type, self.recipe.name,
-                                     recipe_version, parent_task])
-            parent_image += ':SHA1SIGNATURE'
+                                     self.recipe_version(), parent_task.name])
+            parent_image += ':{}'.format(parent_task.signature)
         print('Parent image', parent_image)
         args += [parent_image, '/xd/task/run.sh']
         #if docker.inspect(self.container).exit_code == 0:
         #    docker.rm(self.container)
         result = docker.run(*args)
-        print(result.strip())
+        result_str = result.strip()
+        if result:
+            print(result)
         print('exit_code', result.exit_code)
         if result.exit_code == 0:
-            self.image = '{}:SHA1SIGNATURE'.format(self.container)
-            docker.commit([self.container, self.image])
-            docker.tag([self.image, self.container])
-            docker.rm(self.container)
+            image = self.image()
+            docker.commit([container, image])
+            docker.tag([image, container])
+            docker.rm(container)

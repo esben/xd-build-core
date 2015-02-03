@@ -37,7 +37,10 @@ class Namespace(dict):
 
     def __init__(self, data=None):
         self.eval_wrapper = EvalWrapper(self)
-        super(Namespace, self).__init__(data or {})
+        super(Namespace, self).__init__({})
+        if data:
+            for key, value in data.items():
+                self[key] = value
 
     def copy(self):
         return copy.deepcopy(self)
@@ -123,6 +126,9 @@ class EvalWrapper(object):
         self.namespace = namespace
 
     def __getitem__(self, key):
+        if isinstance(self.namespace[key], str):
+            print('key', key)
+            assert False
         return self.namespace[key].get()
 
 

@@ -22,9 +22,14 @@ class Recipe(object):
         self.name = data['RECIPE_NAME'].get()
         self.version = data['RECIPE_VERSION'].get()
         self.type = data['RECIPE_TYPE'].get()
+        self.tasks = dict()
 
     def get_task(self, name):
-        return Task(self, name)
+        try:
+            return self.tasks[name]
+        except KeyError:
+            task = self.tasks[name] = Task(self, name)
+            return task
 
     def __str__(self):
         s = '%s:%s'%(self.type, self.name)
